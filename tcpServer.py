@@ -136,7 +136,7 @@ def balanceInquire(user="me"):
 
     while block_index < len(chain):
         block = chain[block_index]
-        print(chain[block_index]['data'],block['data']['sndr'], user )        
+             
         if block['data']['sndr'] == user:
             sum-=int(block['data']['amt'])
             
@@ -167,7 +167,7 @@ if __name__=="__main__":
     server.listen(5)
     blockchain = Blockchain()
     initialBalance = 10
-
+    
     while True:
         client,address = server.accept()
         
@@ -180,10 +180,10 @@ if __name__=="__main__":
         if type=="balance":
             balance = str.encode(str(balanceInquire(sndr)))
             client.sendall(balance)
-        elif type=="sendMoney":
+        elif type=="send_money":
             result = str.encode(sendMoney(sndr,rcvr,amt))
             client.sendall(result)
-            
+
 
 
 

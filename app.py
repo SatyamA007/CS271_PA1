@@ -2,6 +2,8 @@ from flask import Flask, render_template, session, copy_current_request_context
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 from util import *
+import os 
+import subprocess
 
 async_mode = None
 app = Flask(__name__)
@@ -25,15 +27,20 @@ def test_message(message):
 @socket_.on('send_money', namespace='/test')
 def test_message(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
+    sndr,rcvr,amt = message['data'][0],message['data'][1],message['data'][2]
+    buffer =  "pass" if (int(balanceInquire(sndr)) - int(amt)>0) else "fail"
     emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']})
+         {'data': f"Transfer of ${amt} from {sndr} to {rcvr} was {buffer}", 'count': session['receive_count']})
+    client_request_transfer(sndr,rcvr,amt)    
+
 
 
 @socket_.on('balance_inquiry', namespace='/test')
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
+    buffer = balanceInquire(message['data'])
     emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']},
+         {'data': f"{buffer} is the current balance of {message['data']}", 'count': session['receive_count']},
          broadcast=True)
 
 
@@ -50,4 +57,7 @@ def disconnect_request():
 
 
 if __name__ == '__main__':
+    os.startfile('python', 'tcpServer.py')
+    subprocess.call('start /wait python tcpServer.py', shell=True)
+
     socket_.run(app, debug=True)
