@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Socket-Test</title>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+
+            namespace = '/test';
+            var socket = io(namespace);
+
+            socket.on('connect', function() {
+                socket.emit('my_event', {data: 'connected to the SocketServer...'});
+            });
+
+            socket.on('my_response', function(msg, cb) {
+                $('#log').append('<br>' + $('<div/>').text('logs #' + msg.count + ': ' + msg.data).html());
+                if (cb)
+                    cb();
+            });
+            $('form#sendMoney').submit(function(event) {
+                txn = [$('#from').val(),$('#to').val(),$('#amt').val()]
+                socket.emit('send_money', {data: txn});
+                return false;
+            });
+            $('form#balance').submit(function(event) {
+                socket.emit('balance_inquiry', {data: $('#user_id').val()});
+                return false;
+            });
+            $('form#disconnect').submit(function(event) {
+                socket.emit('disconnect_request');
+                return false;
+            });
+        });
+    </script>
+</head>
+<body style="background-color:white;">
+
+    <h1 style="background-color:white;">Send Money</h1>
+    <form id="sendMoney" method="POST" action='#'>
+        <input type="text" name="emit_data" id="from" placeholder="From">
+        <input type="text" name="emit_data" id="to" placeholder="To">
+        <input type="text" name="emit_data" id="amt" placeholder="Amount">
+        <input type="submit" value="Send Now">
+    </form>
+    <form id="balance" method="POST" action='#'>
+        <input type="text" name="user_id" id="user_id" placeholder="user# 1,2,3">
+        <input type="submit" value="Current Balance">
+    </form>
+
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="disconnect">
+    </form>
+    <h2 style="background-color:white;">Logs</h2>
+    <div id="log" ></div>
+</body>
+</html>

@@ -1,26 +1,6 @@
 from mimetypes import init
-import socket
+from util import *
 
-def balanceInquire():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect((ip,port))    
-    transaction = str.encode("*".join([str("balance"), str("me"), str("receiver"), str("100")]) +"\n")
-    server.sendall(transaction)
-    buffer = server.recv(1024).decode()
-    server.close()
-    return buffer
-
-def sendMoney(sndr="me", rcvr="receiver", amount="0"):
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect((ip,port))
-    transaction = str.encode("*".join([str("sendMoney"), str(sndr), str(rcvr), str(amount)])+"\n" )
-    server.sendall(transaction)
-    buffer = server.recv(1024).decode()
-    server.close()
-    return buffer
-    
-ip = "127.0.0.1"
-port = 1234
 
 if __name__=="__main__":    
     
