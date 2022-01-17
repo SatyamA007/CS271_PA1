@@ -1,6 +1,8 @@
 import datetime
 import socket
- 
+import socketio
+from util import *
+
 # Calculating the hash
 # in order to add digital
 # fingerprints to the blocks
@@ -140,7 +142,7 @@ def balanceInquire(user="me"):
         if block['data']['sndr'] == user:
             sum-=int(block['data']['amt'])
             
-        elif block['data']['rcvr'] == user:
+        if block['data']['rcvr'] == user:
             sum+=int(block['data']['amt'])
 
         block_index += 1
@@ -154,20 +156,41 @@ def sendMoney(sndr, rcvr, amt):
     else:
         mine_block(sndr,rcvr,amt)
         return "pass"
- 
+
+def inform_front_end(sio_frontEnd, message):
+    try:
+        sio_frontEnd.connect("http://127.0.0.1:5000")
+    except:
+        print("Front-end already connected")
+
+    sio_frontEnd.emit('send_money_result', message)
+
+
 # Run the flask server locally
 #app.run(host='127.0.0.1', port=5000)
 
 
 if __name__=="__main__":
-    ip = "127.0.0.1"
-    port = 1234
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((ip,port))
+    server.bind(server_addr)
     server.listen(5)
     blockchain = Blockchain()
     initialBalance = 10
-    
+
+    sio_frontEnd = socketio.Client()
+
+    @sio_frontEnd.event
+    def connect():
+        print("I'm connected!")
+
+    @sio_frontEnd.event
+    def connect_error():
+        print("The connection failed!")    
+
+    @sio_frontEnd.event
+    def disconnect():
+        print("I'm disconnected!")
+
     while True:
         client,address = server.accept()
         
@@ -181,8 +204,9 @@ if __name__=="__main__":
             balance = str.encode(str(balanceInquire(sndr)))
             client.sendall(balance)
         elif type=="send_money":
-            result = str.encode(sendMoney(sndr,rcvr,amt))
-            client.sendall(result)
+            result = sendMoney(sndr,rcvr,amt)
+            inform_front_end(sio_frontEnd, {'data':[sndr, rcvr, amt],'result': result})
+
 
 
 

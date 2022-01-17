@@ -2,8 +2,6 @@ from flask import Flask, render_template, session, copy_current_request_context
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 from util import *
-import os 
-import subprocess
 
 async_mode = None
 app = Flask(__name__)
@@ -17,25 +15,23 @@ thread_lock = Lock()
 def index():
     return render_template('index.html')
 
-
-@socket_.on('my_event', namespace='/test')
+@socket_.on('my_event')
 def test_message(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
          {'data': message['data'], 'count': session['receive_count']})
 
-@socket_.on('send_money', namespace='/test')
+@socket_.on('send_money')
 def test_message(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     sndr,rcvr,amt = message['data'][0],message['data'][1],message['data'][2]
-    buffer =  "pass" if (int(balanceInquire(sndr)) - int(amt)>0) else "fail"
-    emit('my_response',
-         {'data': f"Transfer of ${amt} from {sndr} to {rcvr} was {buffer}", 'count': session['receive_count']})
-    client_request_transfer(sndr,rcvr,amt)    
+    #buffer =  "pass" if (int(balanceInquire(sndr)) - int(amt)>0) else "fail"
+    #emit('my_response', {'data': f"Transfer of ${amt} from {sndr} to {rcvr} was {buffer}", 'count': session['receive_count']})
+    #client_request_transfer(sndr,rcvr,amt)    
+    sendMoney(sndr,rcvr,amt)    
 
 
-
-@socket_.on('balance_inquiry', namespace='/test')
+@socket_.on('balance_inquiry')
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     buffer = balanceInquire(message['data'])
@@ -43,12 +39,17 @@ def balance_inquiry(message):
          {'data': f"{buffer} is the current balance of {message['data']}", 'count': session['receive_count']},
          broadcast=True)
 
+@socket_.on('send_money_result')
+def send_money_result(message):
+    result, sndr, rcvr, amt = message['result'], message['data'][0],message['data'][1],message['data'][2]
+    emit('my_response', {'data': f"Transfer of {amt} from {sndr} to {rcvr} was a {result}", 'count': '?'}, broadcast=True)
 
-@socket_.on('disconnect_request', namespace='/test')
+
+@socket_.on('disconnect_request')
 def disconnect_request():
     @copy_current_request_context
     def can_disconnect():
-        disconnect()
+        disconnect()        
 
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
@@ -57,7 +58,5 @@ def disconnect_request():
 
 
 if __name__ == '__main__':
-    os.startfile('python', 'tcpServer.py')
-    subprocess.call('start /wait python tcpServer.py', shell=True)
-
+    
     socket_.run(app, debug=True)
