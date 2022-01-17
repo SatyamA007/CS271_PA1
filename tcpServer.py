@@ -1,6 +1,6 @@
 import datetime
 import socket
- 
+from pickle import dumps, loads
 # Calculating the hash
 # in order to add digital
 # fingerprints to the blocks
@@ -168,21 +168,36 @@ if __name__=="__main__":
     blockchain = Blockchain()
     initialBalance = 10
     
+
+    transaction = {
+        'type': 'send_money',
+        'from': '1',
+        'to': '2',
+        'amount': 5
+    }
+    data = {
+        'sender': 'server_request',
+        'transaction': transaction
+    }
     while True:
         client,address = server.accept()
         
         print(f"Connection Established - {address[0]}, {address[1]}")
-        transaction = client.recv(1024).decode()
         
-        print(transaction)
-        type, sndr, rcvr, amt = transaction.split('*')
+        send_data(transaction['from'], data)
+
+        print(f"Connection Established - {address[0]}, {address[1]}")
+        message = client.recv(1024).decode()
         
-        if type=="balance":
-            balance = str.encode(str(balanceInquire(sndr)))
-            client.sendall(balance)
-        elif type=="send_money":
-            result = str.encode(sendMoney(sndr,rcvr,amt))
-            client.sendall(result)
+        args = loads(message)
+        print(args)
+
+        if args['transaction']['type'] == 'send_money':
+            result = str.encode(sendMoney(args['from'], args['to'], args['amount']))
+        elif args['transaction']['type'] == 'balance':
+            result = str.encode(str(balanceInquire(args['from'])))
+        send_data(args['from'], result)
+
 
 
 
