@@ -16,7 +16,7 @@ from client import *
 #             print(f"Transfer of {amount} to {receiver} was {buffer}")
         
 if __name__=="__main__":
-    client_object = Client("1")
+    client_object = Client("3")
     ip, port = client_object.client_addr
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((ip,port))

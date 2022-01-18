@@ -57,7 +57,5 @@ def disconnect_request():
 
 
 if __name__ == '__main__':
-    os.startfile('python', 'tcpServer.py')
-    subprocess.call('start /wait python tcpServer.py', shell=True)
-
-    socket_.run(app, debug=True)
+    
+    socket_.run(app, host='0.0.0.0', debug=True)
