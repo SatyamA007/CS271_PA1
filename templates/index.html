@@ -18,9 +18,13 @@
                 if (cb)
                     cb();
             });
-            $('form#sendMoney').submit(function(event) {
+            $('form#queueTransfer').submit(function(event) {
                 txn = [$('#from').val(),$('#to').val(),$('#amt').val()]
-                socket.emit('send_money', {data: txn});
+                socket.emit('queue_transfer', {data: txn});
+                return false;
+            });
+            $('form#executeAll').submit(function(event) {
+                socket.emit('execute_all_transfer');
                 return false;
             });
             $('form#balance').submit(function(event) {
@@ -33,12 +37,15 @@
 <body style="background-color:white;">
 
     <h2 style="background-color:white;">Send Money</h2>
-    <form id="sendMoney" method="POST" action='#'>
+    <form id="queueTransfer" method="POST" action='#'>
         <input type="text" name="emit_data" id="from" placeholder="From"><br/>
         <input type="text" name="emit_data" id="to" placeholder="To"><br/>
         <input type="text" name="emit_data" id="amt" placeholder="Amount in $"><br/>
-        <input type="submit" value="Request Transfer Now">
+        <input type="submit" value="Enqueue this Transfer">
     </form>
+    <form id="executeAll" method="POST" action='#'>
+        <input type="submit" value="Execute All queued Transfers">
+    </form>   
     <br/><br/>
     <hr/><br/>
     <h2 style="background-color:white;">Balance Inquiry</h2><br/>

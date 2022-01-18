@@ -9,7 +9,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socket_ = SocketIO(app, async_mode=async_mode)
 thread = None
 thread_lock = Lock()
-
+queue = []
 
 @app.route('/')
 def index():
@@ -21,14 +21,25 @@ def test_message(message):
     emit('my_response',
          {'data': message['data'], 'count': session['receive_count']})
 
-@socket_.on('send_money')
-def test_message(message):
+@socket_.on('queue_transfer')
+def queue_transfer(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
-    sndr,rcvr,amt = message['data'][0],message['data'][1],message['data'][2]
-    #buffer =  "pass" if (int(balanceInquire(sndr)) - int(amt)>0) else "fail"
-    #emit('my_response', {'data': f"Transfer of ${amt} from {sndr} to {rcvr} was {buffer}", 'count': session['receive_count']})
-    #client_request_transfer(sndr,rcvr,amt)    
-    sendMoney(sndr,rcvr,amt)    
+    txn = (message['data'][0],message['data'][1],message['data'][2])
+    emit('my_response', {'data': f"Enqueued transfer of ${txn[2]} from {txn[0]} to {txn[1]}", 'count': session['receive_count']})
+    queue.append(txn)
+    
+@socket_.on('execute_all_transfer')
+def execute_all_transfer():
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    if not queue:
+        emit('my_response', {'data': f"No transfers to enqueue! Please enqueue a transfer request first.", 'count': session['receive_count']})
+        return
+    while queue:
+        txn = queue.pop()
+        sndr, rcvr, amt = txn[0],txn[1],txn[2]        
+        emit('my_response', {'data': f"Now processing transfer of ${amt} from {sndr} to {rcvr}", 'count': session['receive_count']})
+        #client_request_transfer(sndr,rcvr,amt)    
+        sendMoney(sndr,rcvr,amt)    
 
 
 @socket_.on('balance_inquiry')
