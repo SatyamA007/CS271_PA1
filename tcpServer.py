@@ -1,5 +1,6 @@
 
 import socket
+import socketio
 from pickle import dumps, loads
 # Calculating the hash
 # in order to add digital
@@ -22,7 +23,6 @@ app = Flask(__name__)
 # Create the object
 # of the class blockchain
 blockchain = Blockchain()
-initialBalance = 10
 
 # Mining a new block
 @app.route('/mine_block', methods=['GET'])
@@ -77,6 +77,7 @@ def getBalance(user="me"):
         
     return sum
 
+
 def makeTransaction(sndr, rcvr, amt):
     balance = getBalance(sndr)
     if balance<int(amt):
@@ -88,6 +89,13 @@ def makeTransaction(sndr, rcvr, amt):
 # Run the flask server locally
 #app.run(host='127.0.0.1', port=5000)
 
+def inform_front_end(sio_frontEnd, message):
+    try:
+        sio_frontEnd.connect("http://127.0.0.1:5000")
+    except:
+        print("Front-end already connected")
+
+    sio_frontEnd.emit('send_money_result', message)
 
 if __name__=="__main__":
     ip = "127.0.0.1"
@@ -96,14 +104,14 @@ if __name__=="__main__":
     server.bind((ip,port))
     server.listen(5)
     blockchain = Blockchain()
-    initialBalance = 10
     
+    sio_frontEnd = socketio.Client()
 
     transaction = {
-        'type': 'send_money',
-        'from': '1',
-        'to': '2',
-        'amount': 5
+        'type': 'balance',
+        'from': '1'
+    #     'to': '2',
+    #     'amount': 5
     }
     data = {
         'sender': 'server_request',
@@ -112,8 +120,7 @@ if __name__=="__main__":
     if data['transaction']['type'] == 'send_money':
         send_data(transaction['from'], data)
     elif data['transaction']['type'] == 'balance':
-        result = str(getBalance(data['from']))
-        print('Balance: ', result)
+        send_data(transaction['from'], data)
         
     while True:
         client,address = server.accept()
@@ -124,14 +131,23 @@ if __name__=="__main__":
         
         args = loads(message)
         print(args)
-        transaction = args[2]
+        transaction = args['transaction']
         if transaction['type'] == 'send_money':
             result = makeTransaction(transaction['from'], transaction['to'], transaction['amount'])
-        data = {
-            'sender': 'server_reply',
-            'result': result
-        }
-        send_data(args[1], data)
+            data = {
+                'sender': 'server_reply',
+                'result': result
+            }
+            send_data(transaction['from'], data)
+            inform_front_end(sio_frontEnd, {'data':[transaction['from'], transaction['to'], transaction['amount']],'result': result})
+        elif transaction['type'] == 'balance':
+            result = str(getBalance(transaction['from']))
+            data = {
+                'sender': 'server_reply',
+                'result': result
+            }
+            send_data(transaction['from'], data)
+            # inform_front_end(sio_frontEnd, {'data':[transaction['from'], transaction['to'], transaction['amount']],'result': result})
 
 
 

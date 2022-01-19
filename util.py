@@ -6,10 +6,18 @@ from pickle import dumps, loads
 
 def balanceInquire(user="1"):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect(server_addr)    
-    transaction = str.encode("*".join(["balance", user, "receiver", "100"]) +"\n")
+    server.connect(server_addr)
+    transaction = {
+        'type': 'balance',
+        'from': user
+    }
+    data = {
+        'sender': 'frontend_request',
+        'transaction': transaction
+    }
+    transaction = dumps(data)
     server.sendall(transaction)
-    buffer = server.recv(1024).decode()
+    buffer = loads(server.recv(1024))
     server.close()
     return buffer
 
@@ -42,7 +50,8 @@ def send_data(rcvr, data):
     operation = dumps(data)
     client.sendall(operation)
     client.close()
-    
+
+initialBalance = 100
 
 server_addr = ("127.0.0.1", 1234)
 client1_addr = ("127.0.0.1", 1235)

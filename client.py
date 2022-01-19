@@ -27,46 +27,40 @@ class Client:
             self.execute()
     
     def receive_release_form_client(self, args):
-        print('Received release request from ', args['sender'])
-        i = 0
-        while self.queue[i][1] != args['sender']:
-            i += 1
-        self.queue.pop(i)
+        print('Release received from .............', args)
+        print(self.queue)
+        if args['sender'] != self.id:
+            self.queue.pop(0)
         self.execute()
     
     def execute(self):
-        print('Checking execution. Queue: ', list(self.queue))
+        print('Head of execution queue: ', list(self.queue))
         if self.queue and self.queue[0][1] == self.id:
             print('Executing transfer request')
             self.replies = 0
             # send request to server to execute
-            send_data('server', self.queue.pop(0))
+            data = self.queue.pop(0)
+            args = {
+                'transaction': data[2],
+                'from': self.id
+            }
+            send_data('server', args)
 
     def send_requests_to_clients(self, args):
         print('Sending requests to clients....')
-        for i in self.queue:
-            if i[1] == self.id:
-                time = i[0]
-                break
         for i, client in enumerate(clients):
-            print('Values......... : ', i + 1, int(self.id))
-            print(self.id, type(self.id))
-            print(i + 1 != int(self.id))
             if i + 1 != int(self.id):
                 data = {
                     'operation': 'request',
                     'sender': self.id,
-                    'time': time,
+                    'time': args['time'],
                     'transaction': args['transaction']
                 }
                 send_data(str(i + 1), data)
                 
     def add_to_queue(self, args):
-        # print(args)
-        # print([args['time'], args['sender'], args['transaction']])
-        # print((args['time'], args['sender'], args['transaction']))
         self.queue.append([args['time'], args['sender'], args['transaction']])
-        self.queue.sort()
+        self.queue.sort(key= lambda x: (x[0], int(x[1])))
         print(self.queue)
 
     def send_reply_to_client(self, args):
@@ -86,10 +80,9 @@ class Client:
         # send release to all clients
         self.time += 1
         for i, client in enumerate(clients):
-            if i + 1 != int(self.id):
-                data = {
-                    'operation': 'release',
-                    'sender': self.id,
-                    'time': self.time
-                }
-                send_data(str(i + 1), data)
+            data = {
+                'operation': 'release',
+                'sender': self.id,
+                'time': self.time
+            }
+            send_data(str(i + 1), data)
