@@ -2,6 +2,7 @@ from flask import Flask, render_template, session, copy_current_request_context
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 from util import *
+from time import sleep
 
 async_mode = None
 app = Flask(__name__)
@@ -25,7 +26,7 @@ def test_message(message):
 def queue_transfer(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     txn = (message['data'][0],message['data'][1],message['data'][2])
-    emit('my_response', {'data': f"Enqueued transfer of ${txn[2]} from {txn[0]} to {txn[1]}", 'count': session['receive_count']})
+    emit('my_response', {'data': f"Enqueued transfer of ${txn[2]} from {txn[0]} to {txn[1]}", 'count':  session['receive_count']})
     queue.append(txn)
     
 @socket_.on('execute_all_transfer')
@@ -45,16 +46,24 @@ def execute_all_transfer():
 @socket_.on('balance_inquiry')
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response', {'data': f"Enqueued balance inquiry for {message['data']}", 'count': session['receive_count']}, broadcast=True)
     buffer = balanceInquire(message['data'])
-    emit('my_response',
-         {'data': f"{buffer} is the current balance of {message['data']}", 'count': session['receive_count']},
-         broadcast=True)
+    emit('balance_print', {'sndr': message['data'], 'amt':buffer }, broadcast=True)
+
 
 @socket_.on('send_money_result')
 def send_money_result(message):
     result, sndr, rcvr, amt = message['result'], message['data'][0],message['data'][1],message['data'][2]
     emit('my_response', {'data': f"Transfer of {amt} from {sndr} to {rcvr} was a {result}", 'count': '?'}, broadcast=True)
+    print(result)
+    if result=='pass':
+        emit('append_chain', {'sndr':sndr,'rcvr':rcvr, 'amt':amt}, broadcast=True)
 
+@socket_.on('balance_inquiry_result')
+def send_money_result(message):
+    sndr, amt = message['data'], message['amt']
+    emit('my_response', {'data': f"Current balance of {sndr} is ${amt}", 'count': '?'}, broadcast=True)
+    emit('balance_print', {'sndr': sndr, 'amt':amt }, broadcast=True)
 
 @socket_.on('disconnect_request')
 def disconnect_request():
@@ -63,9 +72,7 @@ def disconnect_request():
         disconnect()        
 
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': 'Disconnected!', 'count': session['receive_count']},
-         callback=can_disconnect)
+    emit('my_response', {'data': 'Disconnected!', 'count': session['receive_count']}, callback=can_disconnect)
 
 
 if __name__ == '__main__':
