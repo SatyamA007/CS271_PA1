@@ -20,7 +20,7 @@ if __name__=="__main__":
     ip, port = client_object.client_addr
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((ip,port))
-    server.listen(10)
+    server.listen(max_tcp_connections)
     
     while True:
         client,address = server.accept()

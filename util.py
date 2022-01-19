@@ -16,6 +16,7 @@ def send_data(rcvr, data):
     client.close()
 
 initialBalance = 10
+max_tcp_connections = 15
 
 server_addr = ("127.0.0.1", 1234)
 client1_addr = ("127.0.0.1", 4435)

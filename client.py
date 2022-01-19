@@ -23,7 +23,7 @@ class Client:
     def receive_reply_from_client(self, args):
         print('Received reply from ', args['sender'])
         self.replies += 1
-        if self.replies == 2:
+        if self.replies >= 2:
             self.execute()
     
     def receive_release_form_client(self, args):
@@ -35,9 +35,9 @@ class Client:
     
     def execute(self):
         print('Head of execution queue: ', list(self.queue))
-        if self.queue and self.queue[0][1] == self.id:
+        while self.replies>=2 and self.queue and self.queue[0][1] == self.id:
             print('Executing transfer request')
-            self.replies = 0
+            self.replies -= 2
             # send request to server to execute
             data = self.queue.pop(0)
             args = {
