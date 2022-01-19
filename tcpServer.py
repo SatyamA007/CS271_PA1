@@ -102,7 +102,7 @@ if __name__=="__main__":
     port = 1234
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((ip,port))
-    server.listen(5)
+    server.listen(10)
     blockchain = Blockchain()
     
     sio_frontEnd = socketio.Client()
