@@ -21,25 +21,6 @@ def balanceInquire(user="1"):
     server.close()
     return buffer
 
-def sendMoney(sndr="1", rcvr="2", amount="0"):
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect(server_addr)
-    transaction = str.encode("*".join([str("send_money"), str(sndr), str(rcvr), str(amount)])+"\n" )
-    server.sendall(transaction)
-    buffer = server.recv(1024).decode()
-    server.close()
-    return buffer
-
-def client_request_transfer(sndr="1", rcvr="2", amount="0"):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sndr not in ['1','2','3'] : 
-        return
-    client_addr = clients[int(sndr)]
-    client.connect(client_addr)
-    transaction = str.encode("*".join([str("request_transfer"), str(sndr), str(rcvr), str(amount)])+"\n" )
-    client.sendall(transaction)
-    client.close()
-
 def send_data(rcvr, data):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if rcvr == 'server':
@@ -51,7 +32,7 @@ def send_data(rcvr, data):
     client.sendall(operation)
     client.close()
 
-initialBalance = 100
+initialBalance = 10
 
 server_addr = ("127.0.0.1", 1234)
 client1_addr = ("127.0.0.1", 1235)

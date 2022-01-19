@@ -18,15 +18,23 @@ def index():
 @socket_.on('my_event')
 def test_message(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']})
+    emit('my_response', {'data': message['data'], 'count': session['receive_count']})
 
 @socket_.on('queue_transfer')
 def queue_transfer(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
-    txn = (message['data'][0],message['data'][1],message['data'][2])
-    emit('my_response', {'data': f"Enqueued transfer of ${txn[2]} from {txn[0]} to {txn[1]}", 'count': session['receive_count']})
-    queue.append(txn)
+    emit('my_response', {'data': f"Enqueued transfer of ${message['data'][2]} from {message['data'][0]} to {message['data'][1]}", 'count': session['receive_count']})
+    transaction = {
+        'type': 'send_money',
+        'from': message['data'][0],
+        'to': message['data'][1],
+        'amount': message['data'][2]
+    }
+    data = {
+        'sender': 'server_request',
+        'transaction': transaction
+    }
+    queue.append(data)
     
 @socket_.on('execute_all_transfer')
 def execute_all_transfer():
@@ -35,38 +43,41 @@ def execute_all_transfer():
         emit('my_response', {'data': f"No transfers to enqueue! Please enqueue a transfer request first.", 'count': session['receive_count']})
         return
     while queue:
-        txn = queue.pop()
-        sndr, rcvr, amt = txn[0],txn[1],txn[2]        
-        emit('my_response', {'data': f"Now processing transfer of ${amt} from {sndr} to {rcvr}", 'count': session['receive_count']})
-        
-        transaction = {
-            'type': 'send_money',
-            'from': sndr,
-            'to': rcvr,
-            'amount': amt
-        }
-        data = {
-            'sender': 'server_request',
-            'transaction': transaction
-        }
-        send_data(transaction['from'], data)
-        #client_request_transfer(sndr,rcvr,amt)    
-        # sendMoney(sndr,rcvr,amt)    
-
+        data = queue.pop(0)
+        if data['transaction']['type']=='send_money':
+            sndr, rcvr, amt = data['transaction']['from'],data['transaction']['to'],data['transaction']['amount']
+            emit('my_response', {'data': f"Now processing transfer of ${amt} from {sndr} to {rcvr}", 'count': session['receive_count']})       
+        else:
+            emit('my_response', {'data': f"Now processing balance inquiry for {data['transaction']['from']}", 'count': session['receive_count']})       
+        send_data(data['transaction']['from'], data)
 
 @socket_.on('balance_inquiry')
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
-    buffer = balanceInquire(message['data'])
-    emit('my_response',
-         {'data': f"{buffer} is the current balance of {message['data']}", 'count': session['receive_count']},
-         broadcast=True)
+    emit('my_response', {'data': f"Enqueued balance inquiry for {message['data']}", 'count': session['receive_count']}, broadcast=True)
+    transaction = {
+        'type': 'balance',
+        'from': message['data'],
+    }
+    data = {
+        'sender': 'server_request',
+        'transaction': transaction
+    }
+    queue.append(data)
 
 @socket_.on('send_money_result')
 def send_money_result(message):
     result, sndr, rcvr, amt = message['result'], message['data'][0],message['data'][1],message['data'][2]
     emit('my_response', {'data': f"Transfer of {amt} from {sndr} to {rcvr} was a {result}", 'count': '?'}, broadcast=True)
+    print(result)
+    if result=='pass':
+        emit('append_chain', {'sndr':sndr,'rcvr':rcvr, 'amt':amt}, broadcast=True)
 
+@socket_.on('balance_inquiry_result')
+def send_money_result(message):
+    sndr, amt = message['data'], message['amt']
+    emit('my_response', {'data': f"Current balance of {sndr} is ${amt}", 'count': '?'}, broadcast=True)
+    emit('balance_print', {'sndr': sndr, 'amt':amt }, broadcast=True)
 
 @socket_.on('disconnect_request')
 def disconnect_request():
@@ -82,4 +93,4 @@ def disconnect_request():
 
 if __name__ == '__main__':
     
-    socket_.run(app, host='0.0.0.0', debug=True)
+    socket_.run(app, debug=True)

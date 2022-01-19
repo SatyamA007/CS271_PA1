@@ -89,13 +89,13 @@ def makeTransaction(sndr, rcvr, amt):
 # Run the flask server locally
 #app.run(host='127.0.0.1', port=5000)
 
-def inform_front_end(sio_frontEnd, message):
+def inform_front_end(sio_frontEnd, event ,message):
     try:
         sio_frontEnd.connect("http://127.0.0.1:5000")
     except:
         print("Front-end already connected")
 
-    sio_frontEnd.emit('send_money_result', message)
+    sio_frontEnd.emit(event, message)
 
 if __name__=="__main__":
     ip = "127.0.0.1"
@@ -106,22 +106,7 @@ if __name__=="__main__":
     blockchain = Blockchain()
     
     sio_frontEnd = socketio.Client()
-
-    transaction = {
-        'type': 'balance',
-        'from': '1'
-    #     'to': '2',
-    #     'amount': 5
-    }
-    data = {
-        'sender': 'server_request',
-        'transaction': transaction
-    }
-    if data['transaction']['type'] == 'send_money':
-        send_data(transaction['from'], data)
-    elif data['transaction']['type'] == 'balance':
-        send_data(transaction['from'], data)
-        
+  
     while True:
         client,address = server.accept()
         
@@ -139,16 +124,16 @@ if __name__=="__main__":
                 'result': result
             }
             send_data(transaction['from'], data)
-            inform_front_end(sio_frontEnd, {'data':[transaction['from'], transaction['to'], transaction['amount']],'result': result})
+            inform_front_end(sio_frontEnd,'send_money_result', {'data':[transaction['from'], transaction['to'], transaction['amount']],'result': result})
         elif transaction['type'] == 'balance':
-            result = str(getBalance(transaction['from']))
+            amt = str(getBalance(transaction['from']))
             data = {
                 'sender': 'server_reply',
-                'result': result
+                'result': amt
             }
             send_data(transaction['from'], data)
-            # inform_front_end(sio_frontEnd, {'data':[transaction['from'], transaction['to'], transaction['amount']],'result': result})
-
+            inform_front_end(sio_frontEnd,'balance_inquiry_result', {'data':transaction['from'], 'amt': amt})
+            
 
 
 
