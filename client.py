@@ -1,4 +1,11 @@
 from util import *
+# import logging
+import threading
+import time
+
+# format = "%(asctime)s: %(message)s"
+# logging.basicConfig(format=format, level=print,
+#                     datefmt="%H:%M:%S")
 
 class Client:
     def __init__(self, id):
@@ -27,15 +34,17 @@ class Client:
             self.execute()
     
     def receive_release_form_client(self, args):
-        print('Release received from .............', args)
-        print(self.queue)
+        print('Release received from .............', args['sender'])
         if args['sender'] != self.id:
             self.queue.pop(0)
         self.execute()
     
-    def execute(self):
-        print('Head of execution queue: ', list(self.queue))
-        while self.replies>=2 and self.queue and self.queue[0][1] == self.id:
+    def thread_function_execute(self):
+        print('Head of execution queue: ', list([x[0:2] for x in self.queue]))
+        print("Execution thread starting")
+        time.sleep(3)
+        
+        while self.replies >= 2 and self.queue and self.queue[0][1] == self.id:
             print('Executing transfer request')
             self.replies -= 2
             # send request to server to execute
@@ -45,8 +54,17 @@ class Client:
                 'from': self.id
             }
             send_data('server', args)
+        print("Execution thread finishing")
+        
+    def execute(self):
+        print("Main    : before creating thread")
+        x = threading.Thread(target=self.thread_function_execute, args=())
+        print("Main    : before running thread")
+        x.start()
+        print("Main    : all done")
 
-    def send_requests_to_clients(self, args):
+    def thread_function_send_requests(self, args):
+        time.sleep(3)
         print('Sending requests to clients....')
         for i, client in enumerate(clients):
             if i + 1 != int(self.id):
@@ -57,6 +75,12 @@ class Client:
                     'transaction': args['transaction']
                 }
                 send_data(str(i + 1), data)
+    def send_requests_to_clients(self, args):
+        print("Broadcast    : before creating thread")
+        x = threading.Thread(target=self.thread_function_send_requests, args=(args,))
+        print("Broadcast    : before running thread")
+        x.start()
+        print("Broadcast    : all done")
                 
     def add_to_queue(self, args):
         self.queue.append([args['time'], args['sender'], args['transaction']])
