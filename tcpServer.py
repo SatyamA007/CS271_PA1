@@ -115,7 +115,6 @@ if __name__=="__main__":
         message = client.recv(1024)
         
         args = loads(message)
-        print(args)
         transaction = args['transaction']
         if transaction['type'] == 'send_money':
             result = makeTransaction(transaction['from'], transaction['to'], transaction['amount'])

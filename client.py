@@ -35,7 +35,7 @@ class Client:
     
     def receive_release_form_client(self, args):
         print('Release received from .............', args['sender'])
-        if args['sender'] != self.id:
+        if self.queue and args['sender'] == self.queue['sender']:
             self.queue.pop(0)
         self.execute()
     
@@ -54,7 +54,7 @@ class Client:
                 'from': self.id
             }
             send_data('server', args)
-        print("Execution thread finishing")
+        print("Execution thread finishing", list([x[0:2] for x in self.queue]))
         
     def execute(self):
         print("Main    : before creating thread")
@@ -85,7 +85,7 @@ class Client:
     def add_to_queue(self, args):
         self.queue.append([args['time'], args['sender'], args['transaction']])
         self.queue.sort(key= lambda x: (x[0], int(x[1])))
-        print(self.queue)
+        print('Adding new request',  list([x[0:2] for x in self.queue]))
 
     def send_reply_to_client(self, args):
         print('Sending reply to client', args['sender'])
