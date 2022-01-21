@@ -51,6 +51,19 @@ def execute_all_transfer():
             emit('my_response', {'data': f"Now processing balance inquiry for {data['transaction']['from']}", 'count': session['receive_count']})       
         send_data(data['transaction']['from'], data)
 
+@socket_.on('check_valid')
+def check_valid():
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response', {'data': "Validating the blockchain......", 'count': session['receive_count']}, broadcast=True)
+    transaction = {
+        'type': 'validate',
+    }
+    data = {
+        'sender': 'server_request',
+        'transaction': transaction
+    }
+    send_data('server', data)
+
 @socket_.on('balance_inquiry')
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
@@ -78,6 +91,11 @@ def send_money_result(message):
     sndr, amt = message['data'], message['amt']
     emit('my_response', {'data': f"Current balance of {sndr} is ${amt}", 'count': '?'}, broadcast=True)
     emit('balance_print', {'sndr': sndr, 'amt':amt }, broadcast=True)
+
+@socket_.on('check_valid_result')
+def check_valid_result(message):
+    msg = message['data']
+    emit('my_response', {'data': msg, 'count': '?'}, broadcast=True)
 
 @socket_.on('disconnect_request')
 def disconnect_request():

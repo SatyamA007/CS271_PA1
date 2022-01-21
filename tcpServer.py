@@ -54,11 +54,11 @@ def valid():
     valid = blockchain.chain_valid(blockchain.chain)
      
     if valid:
-        response = {'message': 'The Blockchain is valid.'}
+        response = {'data': 'The Blockchain is valid.'}
     else:
-        response = {'message': 'The Blockchain is not valid.'}
-    return jsonify(response), 200
- 
+        response = {'data': 'The Blockchain is not valid.'}
+    return response
+
 def getBalance(user="me"):
     chain = blockchain.chain
     block_index = 0
@@ -132,6 +132,9 @@ if __name__=="__main__":
             }
             send_data(transaction['from'], data)
             inform_front_end(sio_frontEnd,'balance_inquiry_result', {'data':transaction['from'], 'amt': amt})
+        
+        elif transaction['type'] == 'validate':            
+            inform_front_end(sio_frontEnd,'check_valid_result', valid())
             
 
 
