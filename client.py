@@ -35,7 +35,7 @@ class Client:
     
     def receive_release_form_client(self, args):
         print('Release received from .............', args['sender'])
-        if self.queue and args['sender'] == self.queue['sender']:
+        if self.queue and args['sender'] != self.id:
             self.queue.pop(0)
         self.execute()
     
@@ -44,7 +44,7 @@ class Client:
         print("Execution thread starting")
         time.sleep(3)
         
-        while self.replies >= 2 and self.queue and self.queue[0][1] == self.id:
+        if self.replies >= 2 and self.queue and self.queue[0][1] == self.id:
             print('Executing transfer request')
             self.replies -= 2
             # send request to server to execute
