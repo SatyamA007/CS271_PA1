@@ -1,7 +1,9 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Socket-Test</title>
+
+    <title>Lena-Dena Bank Online Blockchain Services</title>
+
     <style>
         #chain {
             display: grid;
@@ -49,7 +51,7 @@
             });
 
             socket.on('my_response', function(msg, cb) {
-                $('#log').append('<br>' + $('<div/>').text('logs #' + msg.count + ': ' + msg.data).html());
+                $('#log').prepend('<br>' + $('<div/>').text('logs #' + msg.count + ': ' + msg.data).html());
                 if (cb)
                     cb();
             });
@@ -67,6 +69,7 @@
                     cb();
             });
             
+
             $('form#queueTransfer').submit(function(event) {
                 txn = [$('#from').val(),$('#to').val(),$('#amt').val()]
                 socket.emit('queue_transfer', {data: txn});
@@ -76,9 +79,15 @@
                 socket.emit('execute_all_transfer');
                 return false;
             });
+
+            $('form#checkValid').submit(function(event) {
+                socket.emit('check_valid');
+                return false;
+            });
             $('form#balance').submit(function(event) {
                 socket.emit('balance_inquiry', {data: $('#user_id').val()});
                 return false;
+
             });           
         });
     </script>
@@ -98,6 +107,11 @@
         </div>
         <div>
             <div id="chain">
+
+                <div>
+                    From: (Genesis)<br/>To: (Genesis)<br/>Amount: (Genesis)<br/>
+                </div>
+
             </div>
         </div> 
              
@@ -119,11 +133,20 @@
             <form id="executeAll" method="POST" action='#' style="text-align: center">
                 <input type="submit" value="Execute All queued Transfers"  class="button">
             </form> 
-            <br/><br/><br/>
+
+            <br/><br/>
             <h2 id="balance_text">Balance of ?? is $0.00</h2>  
+           
+        </div>
+        <br/>
+        <div style="text-align: center">
+            <form id="checkValid" method="POST" action='#' style="text-align: center">
+                <input type="submit" value="Check if Blockchain is valid"  class="button"  style="color: hotpink;border: 2px solid hotpink;">
+            </form> 
         </div>
     </div>
-    <br/><br/><br/>
+    <br/>
+
     <hr/><br/>
 
     <h2 style="background-color:white;">Logs</h2>

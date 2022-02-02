@@ -1,37 +1,26 @@
 
+from http import server
 import socket
+from collections import deque
+from pickle import dumps, loads
 
-def balanceInquire(user="1"):
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect(server_addr)    
-    transaction = str.encode("*".join(["balance", user, "receiver", "100"]) +"\n")
-    server.sendall(transaction)
-    buffer = server.recv(1024).decode()
-    server.close()
-    return buffer
-
-def sendMoney(sndr="1", rcvr="2", amount="0"):
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect(server_addr)
-    transaction = str.encode("*".join([str("send_money"), str(sndr), str(rcvr), str(amount)])+"\n" )
-    server.sendall(transaction)
-    buffer = server.recv(1024).decode()
-    server.close()
-    return buffer
-
-def client_request_transfer(sndr="1", rcvr="2", amount="0"):
+def send_data(rcvr, data):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sndr not in ['1','2','3'] : 
-        return
-    client_addr = clients[int(sndr)]
+    if rcvr == 'server':
+        client_addr = server_addr
+    else:
+        client_addr = clients[int(rcvr) - 1]
     client.connect(client_addr)
-    transaction = str.encode("*".join([str("request_transfer"), str(sndr), str(rcvr), str(amount)])+"\n" )
-    client.sendall(transaction)
+    operation = dumps(data)
+    client.sendall(operation)
     client.close()
 
-    
+initialBalance = 10
+max_tcp_connections = 15
+
 server_addr = ("127.0.0.1", 1234)
-client1_addr = ("128.0.0.1", 1234)
-client2_addr = ("128.0.0.2", 1234)
-client3_addr = ("128.0.0.3", 1234)
+client1_addr = ("127.0.0.1", 4435)
+client2_addr = ("127.0.0.1", 7736)
+client3_addr = ("127.0.0.1", 9937)
 clients = [client1_addr, client2_addr, client3_addr]
+
