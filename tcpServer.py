@@ -2,6 +2,7 @@
 import socket
 import socketio
 from pickle import dumps, loads
+
 # Calculating the hash
 # in order to add digital
 # fingerprints to the blocks
@@ -70,7 +71,7 @@ def getBalance(user="me"):
         if block['data']['sndr'] == user:
             sum-=int(block['data']['amt'])
             
-        elif block['data']['rcvr'] == user:
+        if block['data']['rcvr'] == user:
             sum+=int(block['data']['amt'])
 
         block_index += 1
@@ -85,7 +86,16 @@ def makeTransaction(sndr, rcvr, amt):
     else:
         mine_block(sndr,rcvr,amt)
         return "pass"
- 
+
+def inform_front_end(sio_frontEnd, message):
+    try:
+        sio_frontEnd.connect("http://127.0.0.1:5000")
+    except:
+        print("Front-end already connected")
+
+    sio_frontEnd.emit('send_money_result', message)
+
+
 # Run the flask server locally
 #app.run(host='127.0.0.1', port=5000)
 
@@ -98,9 +108,8 @@ def inform_front_end(sio_frontEnd, event ,message):
     sio_frontEnd.emit(event, message)
 
 if __name__=="__main__":
-    ip = "127.0.0.1"
-    port = 1234
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     server.bind((ip,port))
     server.listen(max_tcp_connections)
     blockchain = Blockchain()

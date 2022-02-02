@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 from util import *
 
+
 async_mode = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -23,6 +24,7 @@ def test_message(message):
 @socket_.on('queue_transfer')
 def queue_transfer(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
+
     emit('my_response', {'data': f"Enqueued transfer of ${message['data'][2]} from {message['data'][0]} to {message['data'][1]}", 'count': session['receive_count']})
     transaction = {
         'type': 'send_money',
@@ -43,6 +45,7 @@ def execute_all_transfer():
         emit('my_response', {'data': f"No transfers to enqueue! Please enqueue a transfer request first.", 'count': session['receive_count']})
         return
     while queue:
+
         data = queue.pop(0)
         if data['transaction']['type']=='send_money':
             sndr, rcvr, amt = data['transaction']['from'],data['transaction']['to'],data['transaction']['amount']
@@ -68,6 +71,7 @@ def check_valid():
 def balance_inquiry(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response', {'data': f"Enqueued balance inquiry for {message['data']}", 'count': session['receive_count']}, broadcast=True)
+
     transaction = {
         'type': 'balance',
         'from': message['data'],
@@ -97,6 +101,7 @@ def check_valid_result(message):
     msg = message['data']
     emit('my_response', {'data': msg, 'count': '?'}, broadcast=True)
 
+
 @socket_.on('disconnect_request')
 def disconnect_request():
     @copy_current_request_context
@@ -104,9 +109,7 @@ def disconnect_request():
         disconnect()        
 
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': 'Disconnected!', 'count': session['receive_count']},
-         callback=can_disconnect)
+    emit('my_response', {'data': 'Disconnected!', 'count': session['receive_count']}, callback=can_disconnect)
 
 
 if __name__ == '__main__':

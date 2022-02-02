@@ -1,7 +1,9 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+
     <title>Lena-Dena Bank Online Blockchain Services</title>
+
     <style>
         #chain {
             display: grid;
@@ -67,6 +69,7 @@
                     cb();
             });
             
+
             $('form#queueTransfer').submit(function(event) {
                 txn = [$('#from').val(),$('#to').val(),$('#amt').val()]
                 socket.emit('queue_transfer', {data: txn});
@@ -76,6 +79,7 @@
                 socket.emit('execute_all_transfer');
                 return false;
             });
+
             $('form#checkValid').submit(function(event) {
                 socket.emit('check_valid');
                 return false;
@@ -83,6 +87,7 @@
             $('form#balance').submit(function(event) {
                 socket.emit('balance_inquiry', {data: $('#user_id').val()});
                 return false;
+
             });           
         });
     </script>
@@ -102,9 +107,11 @@
         </div>
         <div>
             <div id="chain">
+
                 <div>
                     From: (Genesis)<br/>To: (Genesis)<br/>Amount: (Genesis)<br/>
                 </div>
+
             </div>
         </div> 
              
@@ -126,6 +133,7 @@
             <form id="executeAll" method="POST" action='#' style="text-align: center">
                 <input type="submit" value="Execute All queued Transfers"  class="button">
             </form> 
+
             <br/><br/>
             <h2 id="balance_text">Balance of ?? is $0.00</h2>  
            
@@ -138,6 +146,7 @@
         </div>
     </div>
     <br/>
+
     <hr/><br/>
 
     <h2 style="background-color:white;">Logs</h2>
